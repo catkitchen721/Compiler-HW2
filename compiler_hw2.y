@@ -60,8 +60,7 @@ void dump_symbol();
 %token <string> STR_CONST ID
 
 /* Nonterminal with return, which need to sepcify type */
-%type <f_val> stat
-%type <string> type
+%type <string> type initializer count_expr
 
 /* Yacc will start at this nonterminal */
 %start program
@@ -70,22 +69,31 @@ void dump_symbol();
 %%
 
 program
-    : program stat
-    |
+    : program global_decl_or_functions
+    | 
 ;
 
-stat
-    : declaration
-    | compound_stat
-    | expression_stat
-    | print_func
+global_decl_or_functions
+	: global_decl_or_functions global_decl_or_function
+	| global_decl_or_function
+;
+	
+global_decl_or_function
+	: global_decl
+//	| function_define
 ;
 
-declaration
-    : type ID '=' initializer SEMICOLON {
+global_decl
+    : var_decl
+    | function_decl
+;
+
+var_decl
+    : type ID ASGN initializer SEMICOLON {
     	if(strcmp($1, "int") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		insert_symbol($2, "variable", "int", curr_scope, temp);
     	}
     	else if(strcmp($1, "float") == 0)
     	{
@@ -99,13 +107,9 @@ declaration
     	{
     		
     	}
-    	else if(strcmp($1, "void") == 0)
-    	{
-    		// syntax error
-    	}
     	else
     	{
-    		// syntax error
+    		// semantic error
     	}
     }
     | type ID SEMICOLON {
@@ -125,15 +129,29 @@ declaration
     	{
     		
     	}
-    	else if(strcmp($1, "void") == 0)
-    	{
-    		// syntax error
-    	}
     	else
     	{
-    		// syntax error
+    		// semantic error
     	}
     }
+;
+
+function_decl
+	: type ID para_area SEMICOLON
+;
+
+para_area
+	: LB paras RB
+	| LB RB
+;
+
+paras
+	: paras COMMA para
+	| para
+;
+
+para
+	: type ID
 ;
 
 /* actions can be taken when meet the token or rule */
@@ -145,24 +163,18 @@ type
     | VOID { $$ = $1; }
 ;
 
-compound_stat
-    : 
-    | 
-;
-
-expression_stat
-    : 
-    | 
-;
-
-print_func
-    : 
-    | 
-;
-
 initializer
-	:
-	|
+	: I_CONST { $$ = strdup("test");  }
+	| F_CONST { $$ = strdup("test");  }
+	| TRUE_RESULT { $$ = strdup("test");  }
+	| FALSE_RESULT { $$ = strdup("test"); }
+	| STR_CONST { $$ = strdup($1); }
+	| count_expr
+;
+
+count_expr  //need to complete it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	: I_CONST ADD I_CONST { $$ = strdup("test");  }
+	| I_CONST SUB I_CONST { $$ = strdup("test"); }
 ;
 
 %%
@@ -176,6 +188,7 @@ int main(int argc, char** argv)
 
     yyparse();
 	printf("\nTotal lines: %d \n",yylineno);
+	dump_symbol();
 	
 	if(symbol_table != NULL)
 	{
@@ -257,7 +270,7 @@ void dump_symbol() {
     		}
     		sprintf(index_str, "%d", dump_index);
     		sprintf(scope_str, "%d", symbol_table[i].scope_level);
-    		printf("\n%-10s%-10s%-12s%-10s%-10s%-10s\n",
+    		printf("%-10s%-10s%-12s%-10s%-10s%-10s\n",
            index_str, symbol_table[i].name, symbol_table[i].entry_type, symbol_table[i].data_type, scope_str, attribute);
            
            strcpy(symbol_table[i].name, "\0");

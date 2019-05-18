@@ -98,12 +98,12 @@ id			{letter}+({letter}|{digit})*
  /* C type Comment */
 "/*"				{ printf("%s", yytext);  strcat(buf, yytext); BEGIN COMMENT; }
 <COMMENT>[^*\n]+	{ printf("%s", yytext);  strcat(buf, yytext); BEGIN COMMENT; }
-<COMMENT>\n			{ printf("%s%d. ", yytext, yylineno); strcat(buf, yytext); BEGIN COMMENT; }
+<COMMENT>\n			{ printf("%s%d. ", yytext, yylineno); memset(buf, '\0', sizeof(buf)); BEGIN COMMENT; }
 <COMMENT>"*"		{ printf("%s", yytext);  strcat(buf, yytext); BEGIN COMMENT; }
-<COMMENT>"*/"		{ printf("%s", yytext);  strcat(buf, yytext); BEGIN INITIAL;return C_COMMENT; }
+<COMMENT>"*/"		{ printf("%s", yytext);  strcat(buf, yytext); BEGIN INITIAL; }
 
  /* C++ type Comment */
-\/\/.*	{ printf("%s", yytext);  strcat(buf, yytext); return CPP_COMMENT; }
+\/\/.*	{ printf("%s", yytext);  strcat(buf, yytext); }
 
  /* Variable ID */
  {id}       { printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return ID; }
@@ -111,7 +111,7 @@ id			{letter}+({letter}|{digit})*
  /* others */
 
 [;]         { printf("%s", yytext);  strcat(buf, yytext); return SEMICOLON; }
-[\n]        { printf("%s%d. ", yytext, yylineno); strcat(buf, yytext);}
+[\n]        { printf("%s%d. ", yytext, yylineno); memset(buf, '\0', sizeof(buf));}
 [ \t]		{ printf("%s", yytext);  strcat(buf, yytext);} /* Ignore */
 [^ \t\n] 	{ printf("%s", yytext);  strcat(buf, yytext);} /* Ignore other charactor sets */
 <<EOF>>     { return 0; }
