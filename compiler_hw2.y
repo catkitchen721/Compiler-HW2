@@ -21,6 +21,8 @@ typedef struct _symbol_table_entry {
 symbol_table_entry *symbol_table = NULL;
 int table_pointer = 0;
 extern int curr_scope;
+char curr_formal_para[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+int curr_formal_para_index = 0;
 
 /* Symbol table function - you can add new function if needed. */
 int lookup_symbol(char name[32]);
@@ -390,7 +392,60 @@ function_decl
 ;
 
 para_area
-	: LB paras RB
+	: LB paras RB { 
+				curr_formal_para_index = 0;
+				char allEmpty[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+				int targetIndex = 0;
+				char *temp = NULL;
+				if(strcmp(curr_formal_para[0], "\0") != 0)
+				{
+					temp = strtok(curr_formal_para[0], " ");
+					targetIndex = lookup_symbol((char *)(curr_formal_para[0]+1));
+				}
+				if(targetIndex == -1)
+				{
+					insert_symbol((char *)(curr_formal_para[0]+1), "variable", temp, curr_scope+1, allEmpty);
+				}
+				else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+				{
+					insert_symbol((char *)(curr_formal_para[0]+1), "variable", temp, curr_scope+1, allEmpty);
+				}
+				else
+				{
+					// semantic error
+					printf("\n|-----------------------------------------------|\n");
+					printf("| Error found in line %d: %s\n", yylineno, buf);
+					printf("| Redeclared variable %s", (char *)(curr_formal_para[0]+1));
+					printf("\n|-----------------------------------------------|\n\n");
+				}
+				for(int i=1; i<15; i++)
+				{
+					int targetIndex = 0;
+					char *temp = NULL;
+					if(strcmp(curr_formal_para[i], "\0") != 0)
+					{
+						temp = strtok(NULL, " ");
+						targetIndex = lookup_symbol((char *)(curr_formal_para[i]+1));
+					}
+					if(targetIndex == -1)
+					{
+						insert_symbol((char *)(curr_formal_para[i]+1), "variable", temp, curr_scope+1, allEmpty);
+					}
+					else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+					{
+						insert_symbol((char *)(curr_formal_para[i]+1), "variable", temp, curr_scope+1, allEmpty);
+					}
+					else
+					{
+						// semantic error
+						printf("\n|-----------------------------------------------|\n");
+						printf("| Error found in line %d: %s\n", yylineno, buf);
+						printf("| Redeclared variable %s", (char *)(curr_formal_para[i]+1));
+						printf("\n|-----------------------------------------------|\n\n");
+					}
+				}
+				 
+    		}
 	| LB RB
 ;
 
@@ -400,7 +455,7 @@ paras
 ;
 
 para
-	: type ID
+	: type ID { strcat(curr_formal_para[curr_formal_para_index], $1); strcat(curr_formal_para[curr_formal_para_index], " "); strcat(curr_formal_para[curr_formal_para_index], $2); if(curr_formal_para_index <= 14)curr_formal_para_index++; }
 ;
 
 /* actions can be taken when meet the token or rule */
@@ -441,7 +496,30 @@ count_expr  //need to complete it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ;
 
 function_define
-	: type ID para_area combound_area
+	: type ID para_area combound_area { 
+		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "def"};
+		int targetIndex = lookup_symbol($2);
+		if(targetIndex == -1)
+		{
+			insert_symbol($2, "function", "void", curr_scope, temp);
+		}
+		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+		{
+			insert_symbol($2, "function", "void", curr_scope, temp);
+		}
+		else if(targetIndex != -1 && strcmp(symbol_table[targetIndex].formal_para[15], "decl") == 0)
+		{
+			insert_symbol($2, "function", "void", curr_scope, temp);
+		}
+		else
+		{
+			// semantic error
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno, buf);
+			printf("| Redeclared function %s", $2);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+	}
 ;
 
 combound_area
