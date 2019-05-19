@@ -20,7 +20,7 @@ typedef struct _symbol_table_entry {
 
 symbol_table_entry *symbol_table = NULL;
 int table_pointer = 0;
-int curr_scope = 0;
+extern int curr_scope;
 
 /* Symbol table function - you can add new function if needed. */
 int lookup_symbol(char name[32]);
@@ -60,7 +60,7 @@ void dump_symbol();
 %token <string> STR_CONST ID
 
 /* Nonterminal with return, which need to sepcify type */
-%type <string> type initializer count_expr
+%type <string> type
 
 /* Yacc will start at this nonterminal */
 %start program
@@ -80,7 +80,7 @@ global_decl_or_functions
 	
 global_decl_or_function
 	: global_decl
-//	| function_define
+	| function_define
 ;
 
 global_decl
@@ -93,51 +93,300 @@ var_decl
     	if(strcmp($1, "int") == 0)
     	{
     		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
-    		insert_symbol($2, "variable", "int", curr_scope, temp);
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "int", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "int", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else if(strcmp($1, "float") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "float", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "float", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else if(strcmp($1, "bool") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "bool", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "bool", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else if(strcmp($1, "string") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "string", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "string", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else
     	{
     		// semantic error
+    		printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno, buf);
+			printf("| %s can not be declared \"void\"", $2);
+			printf("\n|-----------------------------------------------|\n\n");
     	}
     }
     | type ID SEMICOLON {
     	if(strcmp($1, "int") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "int", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "int", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else if(strcmp($1, "float") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "float", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "float", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else if(strcmp($1, "bool") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "bool", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "bool", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else if(strcmp($1, "string") == 0)
     	{
-    		
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "variable", "string", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "variable", "string", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared variable %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
     	}
     	else
     	{
     		// semantic error
+    		printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno, buf);
+			printf("| %s can not be declared \"void\"", $2);
+			printf("\n|-----------------------------------------------|\n\n");
     	}
     }
 ;
 
 function_decl
-	: type ID para_area SEMICOLON
+	: type ID para_area SEMICOLON {
+		if(strcmp($1, "int") == 0)
+    	{
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "function", "int", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "function", "int", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared function %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
+    	}
+    	else if(strcmp($1, "float") == 0)
+    	{
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "function", "float", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "function", "float", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared function %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
+    	}
+    	else if(strcmp($1, "bool") == 0)
+    	{
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "function", "bool", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "function", "bool", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared function %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
+    	}
+    	else if(strcmp($1, "string") == 0)
+    	{
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "function", "string", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "function", "string", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared function %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
+    	}
+    	else
+    	{
+    		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+    		int targetIndex = lookup_symbol($2);
+    		if(targetIndex == -1)
+    		{
+    			insert_symbol($2, "function", "void", curr_scope, temp);
+    		}
+    		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+    		{
+    			insert_symbol($2, "function", "void", curr_scope, temp);
+    		}
+    		else
+    		{
+    			// semantic error
+				printf("\n|-----------------------------------------------|\n");
+				printf("| Error found in line %d: %s\n", yylineno, buf);
+				printf("| Redeclared function %s", $2);
+				printf("\n|-----------------------------------------------|\n\n");
+    		}
+    	}
+	}
 ;
 
 para_area
@@ -164,17 +413,115 @@ type
 ;
 
 initializer
-	: I_CONST { $$ = strdup("test");  }
-	| F_CONST { $$ = strdup("test");  }
-	| TRUE_RESULT { $$ = strdup("test");  }
-	| FALSE_RESULT { $$ = strdup("test"); }
-	| STR_CONST { $$ = strdup($1); }
+	: logic_initializer
+	| STR_CONST 
+;
+
+logic_initializer
+	: number_initializer
+	| tf_initializer
+;
+
+number_initializer
+	: I_CONST 
+	| F_CONST 
 	| count_expr
+	| ID
+;
+
+tf_initializer
+	: TRUE_RESULT 
+	| FALSE_RESULT 
+	| ID
 ;
 
 count_expr  //need to complete it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	: I_CONST ADD I_CONST { $$ = strdup("test");  }
-	| I_CONST SUB I_CONST { $$ = strdup("test"); }
+	: I_CONST ADD I_CONST 
+	| I_CONST SUB I_CONST 
+;
+
+function_define
+	: type ID para_area combound_area
+;
+
+combound_area
+	: LCB combound_area_inner RCB { dump_symbol(); curr_scope--; }
+;
+
+combound_area_inner
+	: combound_area_inner stat
+	|
+;
+
+stat
+	: asgn_stat
+	| var_decl
+	| print_stat
+	| function_using
+	| if_stat
+	| while_stat
+	| return_stat
+	| SEMICOLON
+;
+
+asgn_stat
+	: ID ASGN initializer SEMICOLON
+	| ID ADDASGN number_initializer SEMICOLON
+	| ID SUBASGN number_initializer SEMICOLON
+	| ID MULASGN number_initializer SEMICOLON
+	| ID DIVASGN number_initializer SEMICOLON
+	| ID MODASGN number_initializer SEMICOLON
+;
+
+print_stat
+	: PRINT LB STR_CONST RB SEMICOLON
+	| PRINT LB ID RB SEMICOLON
+;
+
+function_using
+	: ID para_area_using SEMICOLON 
+;
+
+para_area_using
+	: LB paras_using RB
+	| LB RB
+;
+
+paras_using
+	: paras_using COMMA initializer
+	| initializer
+;
+
+if_stat
+	: single_if_stat else_if_stats else_stat
+	| single_if_stat else_if_stats
+	| single_if_stat else_stat
+	| single_if_stat
+;
+
+single_if_stat
+	: IF LB logic_initializer RB combound_area
+	| IF LB logic_initializer RB stat
+;
+
+else_if_stats 
+	: else_if_stats ELSE single_if_stat
+	| ELSE single_if_stat
+;
+
+else_stat
+	: ELSE combound_area
+	| ELSE stat
+;
+
+while_stat
+	: WHILE LB logic_initializer RB combound_area
+	| WHILE LB logic_initializer RB stat
+;
+
+return_stat
+	: RET initializer SEMICOLON
+	| RET SEMICOLON
 ;
 
 %%
@@ -185,10 +532,11 @@ int main(int argc, char** argv)
     yylineno = 1;
     create_symbol();
     printf("1. ");
+    curr_scope = 0;
 
     yyparse();
+    dump_symbol();
 	printf("\nTotal lines: %d \n",yylineno);
-	dump_symbol();
 	
 	if(symbol_table != NULL)
 	{
@@ -218,11 +566,11 @@ void create_symbol() {
 	}
 }
 void insert_symbol(char name[32], char entry_type[32], char data_type[16], int scope_level, char formal_para[16][16]) {
-	if(lookup_symbol(name) == -1)
+	if(lookup_symbol(name) != -1)
 	{
 		//semantic error.
 	}
-	else if(lookup_symbol(name) == 0)
+	else if(lookup_symbol(name) == -1)
 	{
 		strcpy(symbol_table[table_pointer].name, name);
 		strcpy(symbol_table[table_pointer].entry_type, entry_type);
@@ -243,16 +591,25 @@ int lookup_symbol(char name[32]) {
 	{
 		if(strcmp(symbol_table[i].name, name) == 0)
 		{
-			return -1;  //used
+			return i;  //used
 		}
 	}
-	return 0;
+	return -1;
 }
 void dump_symbol() {
-	if(strcmp(symbol_table[0].name, "\0") == 0) return;
-    printf("\n%-10s%-10s%-12s%-10s%-10s%-10s\n\n",
+	int myFlag = 0;
+	for(int i=0; i<30; i++)
+	{
+		if(symbol_table[i].scope_level == curr_scope && strcmp(symbol_table[i].name, "\0") != 0)
+		{
+			myFlag = 1;
+		}
+	}
+	if(myFlag)
+	{
+		printf("\n%-10s%-10s%-12s%-10s%-10s%-10s\n\n",
            "Index", "Name", "Kind", "Type", "Scope", "Attribute");
-           
+	}
     int dump_index = 0;
            
     for(int i=0; i<30; i++)
@@ -263,10 +620,10 @@ void dump_symbol() {
     	
     	if(symbol_table[i].scope_level == curr_scope && strcmp(symbol_table[i].name, "\0") != 0)
     	{
-    		for(int j=0; j<16; j++)
+    		for(int j=0; j<15; j++)
     		{
     			strcat(attribute, symbol_table[i].formal_para[j]);
-    			if(j != 15 && strcmp(symbol_table[i].formal_para[j+1], "\0") != 0) strcat(attribute, ", ");
+    			if(j != 14 && strcmp(symbol_table[i].formal_para[j+1], "\0") != 0 && strcmp(symbol_table[i].formal_para[j+1], "decl") != 0) strcat(attribute, ", ");
     		}
     		sprintf(index_str, "%d", dump_index);
     		sprintf(scope_str, "%d", symbol_table[i].scope_level);

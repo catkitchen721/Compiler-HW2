@@ -4,6 +4,7 @@
 
 extern YYSTYPE yylval; //YYSTYPE
 char buf[256];
+int curr_scope;
 
 /* This macro is used to record code line */
 #define CONCAT { strncat(buf, yytext, BUF_SIZE - strlen(buf) - 1); }
@@ -56,7 +57,7 @@ id			{letter}+({letter}|{digit})*
  /* Delimiters */
 "("		{ printf("%s", yytext); strcat(buf, yytext); return LB; }
 ")"		{ printf("%s", yytext); strcat(buf, yytext); return RB; }
-"{"		{ printf("%s", yytext); strcat(buf, yytext); return LCB; }
+"{"		{ printf("%s", yytext); strcat(buf, yytext); curr_scope++; return LCB; }
 "}"		{ printf("%s", yytext); strcat(buf, yytext); return RCB; }
 "["		{ printf("%s", yytext); strcat(buf, yytext); return LSB; }
 "]"		{ printf("%s", yytext); strcat(buf, yytext); return RSB; }
