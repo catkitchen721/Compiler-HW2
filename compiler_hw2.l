@@ -5,9 +5,11 @@
 extern YYSTYPE yylval; //YYSTYPE
 char buf[256];
 int curr_scope;
+void dump_symbol();
+char *error_type;
 
 /* This macro is used to record code line */
-#define CONCAT { strncat(buf, yytext, BUF_SIZE - strlen(buf) - 1); }
+#define CONCAT { strncat(buf, yytext, 256 - strlen(buf) - 1); }
 %}
 
 /* Define regular expression label */
@@ -25,96 +27,100 @@ id			{letter}+({letter}|{digit})*
 %%
 
  /* Arithmetic */
-"+"     { printf("%s", yytext); strcat(buf, yytext); return ADD; }
-"-" 	{ printf("%s", yytext); strcat(buf, yytext); return SUB; }
-"*" 	{ printf("%s", yytext); strcat(buf, yytext); return MUL; }
-"/" 	{ printf("%s", yytext); strcat(buf, yytext); return DIV; }
-"%"     { printf("%s", yytext); strcat(buf, yytext); return MOD; }
-"++"    { printf("%s", yytext); strcat(buf, yytext); return INC; }
-"--"    { printf("%s", yytext); strcat(buf, yytext); return DEC; }
+"+"     { if(strcmp(error_type, "") == 0)CONCAT return ADD; }
+"-" 	{ if(strcmp(error_type, "") == 0)CONCAT return SUB; }
+"*" 	{ if(strcmp(error_type, "") == 0)CONCAT return MUL; }
+"/" 	{ if(strcmp(error_type, "") == 0)CONCAT return DIV; }
+"%"     { if(strcmp(error_type, "") == 0)CONCAT return MOD; }
+"++"    { if(strcmp(error_type, "") == 0)CONCAT return INC; }
+"--"    { if(strcmp(error_type, "") == 0)CONCAT return DEC; }
 
  /* Relational */
-">"		{ printf("%s", yytext); strcat(buf, yytext); return MT; }
-"<"		{ printf("%s", yytext); strcat(buf, yytext); return LT; }
-">="	{ printf("%s", yytext); strcat(buf, yytext); return MTE; }
-"<="	{ printf("%s", yytext); strcat(buf, yytext); return LTE; }
-"=="	{ printf("%s", yytext); strcat(buf, yytext); return EQ; }
-"!="	{ printf("%s", yytext); strcat(buf, yytext); return NE; }
+">"		{ if(strcmp(error_type, "") == 0)CONCAT return MT; }
+"<"		{ if(strcmp(error_type, "") == 0)CONCAT return LT; }
+">="	{ if(strcmp(error_type, "") == 0)CONCAT return MTE; }
+"<="	{ if(strcmp(error_type, "") == 0)CONCAT return LTE; }
+"=="	{ if(strcmp(error_type, "") == 0)CONCAT return EQ; }
+"!="	{ if(strcmp(error_type, "") == 0)CONCAT return NE; }
 
  /* Assignment */
-"="		{ printf("%s", yytext); strcat(buf, yytext); return ASGN; }
-"+="	{ printf("%s", yytext); strcat(buf, yytext); return ADDASGN; }
-"-="	{ printf("%s", yytext); strcat(buf, yytext); return SUBASGN; }
-"*="	{ printf("%s", yytext); strcat(buf, yytext); return MULASGN; }
-"/="	{ printf("%s", yytext); strcat(buf, yytext); return DIVASGN; }
-"%="	{ printf("%s", yytext); strcat(buf, yytext); return MODASGN; }
+"="		{ if(strcmp(error_type, "") == 0)CONCAT return ASGN; }
+"+="	{ if(strcmp(error_type, "") == 0)CONCAT return ADDASGN; }
+"-="	{ if(strcmp(error_type, "") == 0)CONCAT return SUBASGN; }
+"*="	{ if(strcmp(error_type, "") == 0)CONCAT return MULASGN; }
+"/="	{ if(strcmp(error_type, "") == 0)CONCAT return DIVASGN; }
+"%="	{ if(strcmp(error_type, "") == 0)CONCAT return MODASGN; }
 
  /* Logical */
-"&&"	{ printf("%s", yytext); strcat(buf, yytext); return AND; }
-"||"	{ printf("%s", yytext); strcat(buf, yytext); return OR; }
-"!"		{ printf("%s", yytext); strcat(buf, yytext); return NOT; }
+"&&"	{ if(strcmp(error_type, "") == 0)CONCAT return AND; }
+"||"	{ if(strcmp(error_type, "") == 0)CONCAT return OR; }
+"!"		{ if(strcmp(error_type, "") == 0)CONCAT return NOT; }
 
  /* Delimiters */
-"("		{ printf("%s", yytext); strcat(buf, yytext); return LB; }
-")"		{ printf("%s", yytext); strcat(buf, yytext); return RB; }
-"{"		{ printf("%s", yytext); strcat(buf, yytext); curr_scope++; return LCB; }
-"}"		{ printf("%s", yytext); strcat(buf, yytext); return RCB; }
-"["		{ printf("%s", yytext); strcat(buf, yytext); return LSB; }
-"]"		{ printf("%s", yytext); strcat(buf, yytext); return RSB; }
-","		{ printf("%s", yytext); strcat(buf, yytext); return COMMA; }
+"("		{ if(strcmp(error_type, "") == 0)CONCAT return LB; }
+")"		{ if(strcmp(error_type, "") == 0)CONCAT return RB; }
+"{"		{ if(strcmp(error_type, "") == 0 || strcmp(error_type, "syntax error") == 0 )CONCAT curr_scope++; return LCB; }
+"}"		{ if(strcmp(error_type, "") == 0)CONCAT return RCB; }
+"["		{ if(strcmp(error_type, "") == 0)CONCAT return LSB; }
+"]"		{ if(strcmp(error_type, "") == 0)CONCAT return RSB; }
+","		{ if(strcmp(error_type, "") == 0)CONCAT return COMMA; }
 
  /* Print Keywords */	
-"print"		{ printf("%s", yytext);  strcat(buf, yytext); return PRINT; }
+"print"		{ if(strcmp(error_type, "") == 0)CONCAT return PRINT; }
 
  /* Condition and Loop Keywords */
-"if"		{ printf("%s", yytext);  strcat(buf, yytext); return IF; }
-"else"		{ printf("%s", yytext);  strcat(buf, yytext); return ELSE; }
-"for"		{ printf("%s", yytext);  strcat(buf, yytext); return FOR; }
-"while"		{ printf("%s", yytext);  strcat(buf, yytext); return WHILE; }
+"if"		{ if(strcmp(error_type, "") == 0)CONCAT return IF; }
+"else"		{ if(strcmp(error_type, "") == 0)CONCAT return ELSE; }
+"for"		{ if(strcmp(error_type, "") == 0)CONCAT return FOR; }
+"while"		{ if(strcmp(error_type, "") == 0)CONCAT return WHILE; }
 
  /* Declaration Keywords */
-"void"		{ printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return VOID; }
-"int"		{ printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return INT; }
-"float"  	{ printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return FLOAT; }
-"string"  	{ printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return STRING; }
-"bool"  	{ printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return BOOL; }
+"void"		{ if(strcmp(error_type, "") == 0)CONCAT yylval.string = strdup(yytext); return VOID; }
+"int"		{ if(strcmp(error_type, "") == 0)CONCAT yylval.string = strdup(yytext); return INT; }
+"float"  	{ if(strcmp(error_type, "") == 0)CONCAT yylval.string = strdup(yytext); return FLOAT; }
+"string"  	{ if(strcmp(error_type, "") == 0)CONCAT yylval.string = strdup(yytext); return STRING; }
+"bool"  	{ if(strcmp(error_type, "") == 0)CONCAT yylval.string = strdup(yytext); return BOOL; }
 
  /* boolean Keywords */
-"true"      { printf("%s", yytext);  strcat(buf, yytext); yylval.bool_val = 1; return TRUE_RESULT; }
-"false"     { printf("%s", yytext);  strcat(buf, yytext); yylval.bool_val = 0; return FALSE_RESULT; }
+"true"      { if(strcmp(error_type, "") == 0)CONCAT yylval.bool_val = 1; return TRUE_RESULT; }
+"false"     { if(strcmp(error_type, "") == 0)CONCAT yylval.bool_val = 0; return FALSE_RESULT; }
 
-"return"    { printf("%s", yytext);  strcat(buf, yytext); return RET; }
-"continue"	{ printf("%s", yytext);  strcat(buf, yytext); return CONTINUE; }
-"break"	{ printf("%s", yytext);  strcat(buf, yytext); return BREAK; }
+"return"    { if(strcmp(error_type, "") == 0)CONCAT return RET; }
+"continue"	{ if(strcmp(error_type, "") == 0)CONCAT return CONTINUE; }
+"break"	{ if(strcmp(error_type, "") == 0)CONCAT return BREAK; }
 
  /* String Constant */
-\"				        { printf("%s", yytext);  strcat(buf, yytext); BEGIN STRING_STATE; }
-<STRING_STATE>\"		{ printf("%s", yytext);  strcat(buf, yytext); BEGIN INITIAL; }
-<STRING_STATE>[^"]*		{ printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return STR_CONST; }
+\"				        { if(strcmp(error_type, "") == 0)CONCAT BEGIN STRING_STATE; }
+<STRING_STATE>\"		{ if(strcmp(error_type, "") == 0)CONCAT BEGIN INITIAL; }
+<STRING_STATE>[^"]*		{ if(strcmp(error_type, "") == 0)CONCAT yylval.string = strdup(yytext); return STR_CONST; }
 
  /* Number Constant */
-{integer}	{ printf("%s", yytext);  strcat(buf, yytext); yylval.i_val = atoi(yytext); return I_CONST; }
-{float}	    { printf("%s", yytext);  strcat(buf, yytext); yylval.f_val = atof(yytext); return F_CONST; }
+{integer}	{ if(strcmp(error_type, "") == 0)CONCAT yylval.i_val = atoi(yytext); return I_CONST; }
+{float}	    { if(strcmp(error_type, "") == 0)CONCAT yylval.f_val = atof(yytext); return F_CONST; }
 
  /* C type Comment */
-"/*"				{ printf("%s", yytext);  strcat(buf, yytext); BEGIN COMMENT; }
-<COMMENT>[^*\n]+	{ printf("%s", yytext);  strcat(buf, yytext); BEGIN COMMENT; }
-<COMMENT>\n			{ printf("%s%d. ", yytext, yylineno); memset(buf, '\0', sizeof(buf)); BEGIN COMMENT; }
-<COMMENT>"*"		{ printf("%s", yytext);  strcat(buf, yytext); BEGIN COMMENT; }
-<COMMENT>"*/"		{ printf("%s", yytext);  strcat(buf, yytext); BEGIN INITIAL; }
+"/*"				{ if(strcmp(error_type, "") == 0)CONCAT BEGIN COMMENT; }
+<COMMENT>[^*\n]+	{ if(strcmp(error_type, "") == 0)CONCAT BEGIN COMMENT; }
+<COMMENT>\n			{ if(strcmp(error_type, "") == 0)CONCAT 
+	/*(strcmp(buf, "\n") == 0)?printf("%d:%s", yylineno, buf):printf("%d: %s", yylineno, buf);*/ 
+	BEGIN COMMENT; return NL; }
+<COMMENT>"*"		{ if(strcmp(error_type, "") == 0)CONCAT BEGIN COMMENT; }
+<COMMENT>"*/"		{ if(strcmp(error_type, "") == 0)CONCAT BEGIN INITIAL; }
 
  /* C++ type Comment */
-\/\/.*	{ printf("%s", yytext);  strcat(buf, yytext); }
+\/\/.*	{ if(strcmp(error_type, "") == 0)CONCAT }
 
  /* Variable ID */
- {id}       { printf("%s", yytext);  strcat(buf, yytext); yylval.string = strdup(yytext); return ID; }
+ {id}       { if(strcmp(error_type, "") == 0)CONCAT yylval.string = strdup(yytext); return ID; }
 
  /* others */
 
-[;]         { printf("%s", yytext);  strcat(buf, yytext); return SEMICOLON; }
-[\n]        { printf("%s%d. ", yytext, yylineno); memset(buf, '\0', sizeof(buf));}
-[ \t]		{ printf("%s", yytext);  strcat(buf, yytext);} /* Ignore */
-[^ \t\n] 	{ printf("%s", yytext);  strcat(buf, yytext);} /* Ignore other charactor sets */
+[;]         { if(strcmp(error_type, "") == 0)CONCAT return SEMICOLON; }
+[\n]        { if(strcmp(error_type, "") == 0)CONCAT 
+	/*(strcmp(buf, "\n") == 0)?printf("%d:%s", yylineno, buf):printf("%d: %s", yylineno, buf);*/ 
+	return NL; }
+[ \t]		{ if(strcmp(error_type, "") == 0)CONCAT } /* Ignore */
+[^ \t\n] 	{ if(strcmp(error_type, "") == 0)CONCAT } /* Ignore other charactor sets */
 <<EOF>>     { return 0; }
 
 %%

@@ -9,6 +9,8 @@ extern int yylex();
 extern char* yytext;   // Get current token from lex
 extern char buf[256];  // Get current code line from lex
 void yyerror(char *s);
+extern char *error_type;
+char *error_target;
 
 typedef struct _symbol_table_entry {
 	char name[32];
@@ -23,6 +25,7 @@ int table_pointer = 0;
 extern int curr_scope;
 char curr_formal_para[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
 int curr_formal_para_index = 0;
+int dump_on = -1;
 
 /* Symbol table function - you can add new function if needed. */
 int lookup_symbol(char name[32]);
@@ -52,7 +55,7 @@ void dump_symbol();
 %token AND OR NOT
 %token LB RB LCB RCB LSB RSB COMMA
 %token RET CONTINUE BREAK
-%token C_COMMENT CPP_COMMENT
+%token C_COMMENT CPP_COMMENT NL
 
 /* Token with return, which need to sepcify type */
 %token <i_val> I_CONST
@@ -72,17 +75,60 @@ void dump_symbol();
 
 program
     : program global_decl_or_functions
-    | 
+    |
 ;
 
 global_decl_or_functions
 	: global_decl_or_functions global_decl_or_function
 	| global_decl_or_function
+	| new_line
 ;
 	
 global_decl_or_function
 	: global_decl
 	| function_define
+;
+
+new_line
+	: NL { 
+		if(strcmp(error_type, "") == 0)
+			(strcmp(buf, "\n") == 0)?printf("%d:%s", yylineno, buf):printf("%d: %s", yylineno, buf); 
+		else
+			(strcmp(buf, "\n") == 0)?printf("%d:%s\n", yylineno, buf):printf("%d: %s\n", yylineno, buf);
+		if(strcmp(error_type, "Redeclared variable") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno, buf);
+			printf("| Redeclared variable %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else if(strcmp(error_type, "Redeclared function") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno, buf);
+			printf("| Redeclared function %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else if(strcmp(error_type, "Undeclared variable") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno, buf);
+			printf("| Undeclared variable %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else if(strcmp(error_type, "Undeclared function") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno, buf);
+			printf("| Undeclared function %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else;
+		error_type = strdup("");
+		error_target = strdup("");
+		memset(buf, '\0', sizeof(buf)); 
+		if(dump_on == 0){dump_symbol(); curr_scope--; dump_on = -1;}
+	}
 ;
 
 global_decl
@@ -107,10 +153,8 @@ var_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "float") == 0)
@@ -128,10 +172,8 @@ var_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "bool") == 0)
@@ -148,11 +190,8 @@ var_decl
     		}
     		else
     		{
-    			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+    			error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "string") == 0)
@@ -169,20 +208,14 @@ var_decl
     		}
     		else
     		{
-    			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+    			error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else
     	{
-    		// semantic error
-    		printf("\n|-----------------------------------------------|\n");
-			printf("| Error found in line %d: %s\n", yylineno, buf);
-			printf("| %s can not be declared \"void\"", $2);
-			printf("\n|-----------------------------------------------|\n\n");
+    		error_type = strdup("Redeclared variable");
+			error_target = strdup($2);
     	}
     }
     | type ID SEMICOLON {
@@ -201,10 +234,8 @@ var_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "float") == 0)
@@ -222,10 +253,8 @@ var_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "bool") == 0)
@@ -243,10 +272,8 @@ var_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "string") == 0)
@@ -264,19 +291,15 @@ var_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared variable %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared variable");
+				error_target = strdup($2);
     		}
     	}
     	else
     	{
     		// semantic error
-    		printf("\n|-----------------------------------------------|\n");
-			printf("| Error found in line %d: %s\n", yylineno, buf);
-			printf("| %s can not be declared \"void\"", $2);
-			printf("\n|-----------------------------------------------|\n\n");
+    		error_type = strdup("Redeclared variable");
+			error_target = strdup($2);
     	}
     }
 ;
@@ -298,10 +321,8 @@ function_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared function %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared function");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "float") == 0)
@@ -319,10 +340,8 @@ function_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared function %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared function");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "bool") == 0)
@@ -340,10 +359,8 @@ function_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared function %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared function");
+				error_target = strdup($2);
     		}
     	}
     	else if(strcmp($1, "string") == 0)
@@ -361,13 +378,11 @@ function_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared function %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared function");
+				error_target = strdup($2);
     		}
     	}
-    	else
+    	else if(strcmp($1, "void") == 0)
     	{
     		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
     		int targetIndex = lookup_symbol($2);
@@ -382,70 +397,19 @@ function_decl
     		else
     		{
     			// semantic error
-				printf("\n|-----------------------------------------------|\n");
-				printf("| Error found in line %d: %s\n", yylineno, buf);
-				printf("| Redeclared function %s", $2);
-				printf("\n|-----------------------------------------------|\n\n");
+				error_type = strdup("Redeclared function");
+				error_target = strdup($2);
     		}
+    	}
+    	else
+    	{
+    		
     	}
 	}
 ;
 
 para_area
-	: LB paras RB { 
-				curr_formal_para_index = 0;
-				char allEmpty[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0"};
-				int targetIndex = 0;
-				char *temp = NULL;
-				if(strcmp(curr_formal_para[0], "\0") != 0)
-				{
-					temp = strtok(curr_formal_para[0], " ");
-					targetIndex = lookup_symbol((char *)(curr_formal_para[0]+1));
-				}
-				if(targetIndex == -1)
-				{
-					insert_symbol((char *)(curr_formal_para[0]+1), "variable", temp, curr_scope+1, allEmpty);
-				}
-				else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
-				{
-					insert_symbol((char *)(curr_formal_para[0]+1), "variable", temp, curr_scope+1, allEmpty);
-				}
-				else
-				{
-					// semantic error
-					printf("\n|-----------------------------------------------|\n");
-					printf("| Error found in line %d: %s\n", yylineno, buf);
-					printf("| Redeclared variable %s", (char *)(curr_formal_para[0]+1));
-					printf("\n|-----------------------------------------------|\n\n");
-				}
-				for(int i=1; i<15; i++)
-				{
-					int targetIndex = 0;
-					char *temp = NULL;
-					if(strcmp(curr_formal_para[i], "\0") != 0)
-					{
-						temp = strtok(NULL, " ");
-						targetIndex = lookup_symbol((char *)(curr_formal_para[i]+1));
-					}
-					if(targetIndex == -1)
-					{
-						insert_symbol((char *)(curr_formal_para[i]+1), "variable", temp, curr_scope+1, allEmpty);
-					}
-					else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
-					{
-						insert_symbol((char *)(curr_formal_para[i]+1), "variable", temp, curr_scope+1, allEmpty);
-					}
-					else
-					{
-						// semantic error
-						printf("\n|-----------------------------------------------|\n");
-						printf("| Error found in line %d: %s\n", yylineno, buf);
-						printf("| Redeclared variable %s", (char *)(curr_formal_para[i]+1));
-						printf("\n|-----------------------------------------------|\n\n");
-					}
-				}
-				 
-    		}
+	: LB paras RB
 	| LB RB
 ;
 
@@ -455,7 +419,30 @@ paras
 ;
 
 para
-	: type ID { strcat(curr_formal_para[curr_formal_para_index], $1); strcat(curr_formal_para[curr_formal_para_index], " "); strcat(curr_formal_para[curr_formal_para_index], $2); if(curr_formal_para_index <= 14)curr_formal_para_index++; }
+	: type ID { 
+		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+		int targetIndex = lookup_symbol($2);
+		if(targetIndex == -1)
+		{
+			insert_symbol($2, "parameter", $1, curr_scope+1, temp);
+		}
+		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
+		{
+			insert_symbol($2, "parameter", $1, curr_scope+1, temp);
+		}
+		else
+		{
+			// semantic error
+			error_type = strdup("Redeclared variable");
+			error_target = strdup($2);
+		}
+	/*
+		strcat(curr_formal_para[curr_formal_para_index], $1); 
+		strcat(curr_formal_para[curr_formal_para_index], " "); 
+		strcat(curr_formal_para[curr_formal_para_index], $2); 
+		if(curr_formal_para_index <= 14) curr_formal_para_index++; 
+	*/
+	}
 ;
 
 /* actions can be taken when meet the token or rule */
@@ -481,49 +468,144 @@ number_initializer
 	: I_CONST 
 	| F_CONST 
 	| count_expr
-	| ID
+	| ID { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
 ;
 
 tf_initializer
 	: TRUE_RESULT 
 	| FALSE_RESULT 
-	| ID
+	| ID { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
 ;
 
 count_expr  //need to complete it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	: I_CONST ADD I_CONST 
-	| I_CONST SUB I_CONST 
+	: number_initializer two_term_op number_initializer
+	| logic_initializer two_term_op_logic logic_initializer
+	| LB count_expr RB
+	| pre_one_term_op logic_initializer
+	| both_one_term_op ID { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($2);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($2);
+			}
+			else
+			{
+				
+			} 
+		}
+	| ID both_one_term_op { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+;
+
+two_term_op
+	: ADD
+	| SUB
+	| MUL
+	| DIV
+	| MOD
+	| MT
+	| LT
+	| MTE
+	| LTE
+	| EQ
+	| NE
+	| two_term_op_logic
+;
+
+two_term_op_logic
+	: AND
+	| OR
+;
+
+one_term_op
+	: pre_one_term_op
+	| both_one_term_op
+;
+
+pre_one_term_op
+	: NOT
+;
+
+both_one_term_op
+	: INC
+	| DEC
 ;
 
 function_define
 	: type ID para_area combound_area { 
 		char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "def"};
+		for(int i=0; i<30; i++)
+		{
+			if(strcmp(symbol_table[i].entry_type, "parameter") == 0)
+			{
+				strcpy(temp[i], symbol_table[i].data_type);
+			}
+		}
 		int targetIndex = lookup_symbol($2);
 		if(targetIndex == -1)
 		{
-			insert_symbol($2, "function", "void", curr_scope, temp);
+			insert_symbol($2, "function", $1, curr_scope-1, temp);
 		}
 		else if(targetIndex != -1 && symbol_table[targetIndex].scope_level != curr_scope)
 		{
-			insert_symbol($2, "function", "void", curr_scope, temp);
+			insert_symbol($2, "function", $1, curr_scope-1, temp);
 		}
 		else if(targetIndex != -1 && strcmp(symbol_table[targetIndex].formal_para[15], "decl") == 0)
 		{
-			insert_symbol($2, "function", "void", curr_scope, temp);
+			insert_symbol($2, "function", $1, curr_scope-1, temp);
 		}
 		else
 		{
 			// semantic error
-			printf("\n|-----------------------------------------------|\n");
-			printf("| Error found in line %d: %s\n", yylineno, buf);
-			printf("| Redeclared function %s", $2);
-			printf("\n|-----------------------------------------------|\n\n");
+			error_type = strdup("Redeclared function");
+			error_target = strdup($2);
 		}
 	}
 ;
 
 combound_area
-	: LCB combound_area_inner RCB { dump_symbol(); curr_scope--; }
+	: LCB combound_area_inner RCB { dump_on = 0; }
 ;
 
 combound_area_inner
@@ -532,32 +614,165 @@ combound_area_inner
 ;
 
 stat
-	: asgn_stat
+	: asgn_stat SEMICOLON
 	| var_decl
-	| print_stat
-	| function_using
+	| print_stat SEMICOLON
+	| function_using SEMICOLON
 	| if_stat
 	| while_stat
-	| return_stat
+	| return_stat SEMICOLON
 	| SEMICOLON
+	| new_line
 ;
 
 asgn_stat
-	: ID ASGN initializer SEMICOLON
-	| ID ADDASGN number_initializer SEMICOLON
-	| ID SUBASGN number_initializer SEMICOLON
-	| ID MULASGN number_initializer SEMICOLON
-	| ID DIVASGN number_initializer SEMICOLON
-	| ID MODASGN number_initializer SEMICOLON
+	: ID ASGN initializer { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+	| ID ADDASGN number_initializer{ 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+	| ID SUBASGN number_initializer { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+	| ID MULASGN number_initializer { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+	| ID DIVASGN number_initializer { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+	| ID MODASGN number_initializer { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+	| ID both_one_term_op { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
+	| both_one_term_op ID { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($2);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($2);
+			}
+			else
+			{
+				
+			} 
+		}
 ;
 
 print_stat
-	: PRINT LB STR_CONST RB SEMICOLON
-	| PRINT LB ID RB SEMICOLON
+	: PRINT LB STR_CONST RB
+	| PRINT LB ID RB { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($3);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared variable");
+				error_target = strdup($3);
+			}
+			else
+			{
+				
+			} 
+		}
 ;
 
 function_using
-	: ID para_area_using SEMICOLON 
+	: ID para_area_using { 
+			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
+			int targetIndex = lookup_symbol($1);
+			if(targetIndex == -1)
+			{
+				// semantic error
+				error_type = strdup("Undeclared function");
+				error_target = strdup($1);
+			}
+			else
+			{
+				
+			} 
+		}
 ;
 
 para_area_using
@@ -598,8 +813,8 @@ while_stat
 ;
 
 return_stat
-	: RET initializer SEMICOLON
-	| RET SEMICOLON
+	: RET initializer
+	| RET
 ;
 
 %%
@@ -607,14 +822,16 @@ return_stat
 /* C code section */
 int main(int argc, char** argv)
 {
-    yylineno = 1;
+    yylineno = 0;
     create_symbol();
-    printf("1. ");
     curr_scope = 0;
+    int result = 0;
+    error_type = strdup("");
+    error_target = strdup("");
 
-    yyparse();
+    result = yyparse();
     dump_symbol();
-	printf("\nTotal lines: %d \n",yylineno);
+	if(result == 0) printf("\nTotal lines: %d \n",yylineno);
 	
 	if(symbol_table != NULL)
 	{
@@ -625,10 +842,52 @@ int main(int argc, char** argv)
 
 void yyerror(char *s)
 {
-    printf("\n|-----------------------------------------------|\n");
+	if(strcmp(s, "syntax error") == 0)
+	{
+		(strcmp(buf, "\n") == 0)?printf("%d:%s\n", yylineno + 1, buf):printf("%d: %s\n", yylineno + 1, buf); 
+		if(strcmp(error_type, "Redeclared variable") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno+1, buf);
+			printf("| Redeclared variable %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else if(strcmp(error_type, "Redeclared function") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno+1, buf);
+			printf("| Redeclared function %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else if(strcmp(error_type, "Undeclared variable") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno+1, buf);
+			printf("| Undeclared variable %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else if(strcmp(error_type, "Undeclared function") == 0)
+		{
+			printf("\n|-----------------------------------------------|\n");
+			printf("| Error found in line %d: %s\n", yylineno+1, buf);
+			printf("| Undeclared function %s", error_target);
+			printf("\n|-----------------------------------------------|\n\n");
+		}
+		else;
+		error_type = strdup("");
+		error_target = strdup("");
+		
+		error_type = strdup("syntax error");
+		printf("\n|-----------------------------------------------|\n");
+    	printf("| Error found in line %d: %s\n", yylineno + 1, buf);
+    	printf("| %s", s);
+    	printf("\n|-----------------------------------------------|\n\n");
+    	memset(buf, '\0', sizeof(buf)); 
+	}
+    /*printf("\n|-----------------------------------------------|\n");
     printf("| Error found in line %d: %s\n", yylineno, buf);
     printf("| %s", s);
-    printf("\n|-----------------------------------------------|\n\n");
+    printf("\n|-----------------------------------------------|\n\n");*/
 }
 
 void create_symbol() {
@@ -689,10 +948,12 @@ void dump_symbol() {
            "Index", "Name", "Kind", "Type", "Scope", "Attribute");
 	}
     int dump_index = 0;
+    int isPrinted = -1;
            
     for(int i=0; i<30; i++)
     {
-    	char attribute[10] = "\0";
+    	char *attribute;
+    	attribute = strdup("\0");
     	char index_str[10] = "\0";
     	char scope_str[10] = "\0";
     	
@@ -701,12 +962,26 @@ void dump_symbol() {
     		for(int j=0; j<15; j++)
     		{
     			strcat(attribute, symbol_table[i].formal_para[j]);
-    			if(j != 14 && strcmp(symbol_table[i].formal_para[j+1], "\0") != 0 && strcmp(symbol_table[i].formal_para[j+1], "decl") != 0) strcat(attribute, ", ");
+    			if(strcmp(attribute, "\0") != 0 && j != 14 && strcmp(symbol_table[i].formal_para[j+1], "\0") != 0 && strcmp(symbol_table[i].formal_para[j+1], "decl") != 0) strcat(attribute, ", ");
     		}
     		sprintf(index_str, "%d", dump_index);
     		sprintf(scope_str, "%d", symbol_table[i].scope_level);
-    		printf("%-10s%-10s%-12s%-10s%-10s%-10s\n",
-           index_str, symbol_table[i].name, symbol_table[i].entry_type, symbol_table[i].data_type, scope_str, attribute);
+    		isPrinted = 0;
+    		if(strcmp(attribute, "\0") != 0)
+    		{
+    			printf("%-10s%-10s%-12s%-10s%-10s",
+           index_str, symbol_table[i].name, symbol_table[i].entry_type, symbol_table[i].data_type, scope_str);
+           		for(int k=0; k<10; k++)
+           		{
+           			(attribute[k] == '\0')?:printf("%c", attribute[k]);
+				}
+				printf("\n");
+           }
+           else
+           {
+           		printf("%-10s%-10s%-12s%-10s%-10s\n",
+           index_str, symbol_table[i].name, symbol_table[i].entry_type, symbol_table[i].data_type, scope_str);
+           }
            
            strcpy(symbol_table[i].name, "\0");
 		   strcpy(symbol_table[i].entry_type, "\0");
@@ -717,5 +992,9 @@ void dump_symbol() {
            
            dump_index++;
     	}
+    }
+    if(isPrinted == 0)
+    {
+    	printf("\n");
     }
 }
