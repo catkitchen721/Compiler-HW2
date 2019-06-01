@@ -741,21 +741,25 @@ asgn_stat
 ;
 
 print_stat
-	: PRINT LB STR_CONST RB
-	| PRINT LB ID RB { 
+	: PRINT LB print_target RB
+;
+
+print_target
+	: ID { 
 			char temp[16][16] = {"\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "\0", "decl"};
-			int targetIndex = lookup_symbol($3);
+			int targetIndex = lookup_symbol($1);
 			if(targetIndex == -1)
 			{
 				// semantic error
 				error_type = strdup("Undeclared variable");
-				error_target = strdup($3);
+				error_target = strdup($1);
 			}
 			else
 			{
 				
 			} 
 		}
+	| STR_CONST
 ;
 
 function_using
